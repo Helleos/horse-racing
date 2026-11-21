@@ -23,7 +23,7 @@ from pathlib import Path
 # do not rename
 async def custom_site():
     import embed
-    platform.document.body.style.background = "#7f7f7f"
+    platform.document.body.style.background = "#0a0c12"
 
     platform.window.transfer.hidden = true
     platform.window.canvas.style.visibility = "visible"
@@ -44,7 +44,7 @@ async def custom_site():
                 zip_ref.extractall(appdir.as_posix())
     else:
         import tarfile
-        async with platform.fopen("web.tar.gz?v=5", "rb") as archive:
+        async with platform.fopen("web.tar.gz?v=6", "rb") as archive:
             tar = tarfile.open(fileobj=archive, mode="r:gz")
             tar.extractall(path=appdir.as_posix(), filter='tar')
             tar.close()
@@ -152,8 +152,8 @@ function pages_base() {
 config = {
     xtermjs : "1" ,
     _sdl2 : "canvas",
-    user_canvas : 0,
-    user_canvas_managed : 0,
+    user_canvas : 1,
+    user_canvas_managed : 1,
     gui_divider : 1,
     ume_block : 1,
     can_close : 0,
@@ -383,10 +383,39 @@ frameborder="1"
         console.warn("TODO: panda3d canvas monitor", self, ecw, ech)
     }
 
-    async function custom_onload(debug_hidden) {
+    async     // Largest 1200x720 rectangle that fits the browser window.
+    // pygbag otherwise sizes from the bitmap, which starts at 1x1 and stays square.
+    function fitGameCanvas() {
+        var canvas = document.getElementById("canvas");
+        if (!canvas) return;
+        var maxW = window.innerWidth;
+        var maxH = window.innerHeight;
+        var ar = 1200 / 720;
+        var w = maxW;
+        var h = Math.floor(w / ar);
+        if (h > maxH) {
+            h = maxH;
+            w = Math.floor(h * ar);
+        }
+        if (w < 1) w = 1;
+        if (h < 1) h = 1;
+        canvas.style.position = "absolute";
+        canvas.style.left = "0px";
+        canvas.style.right = "0px";
+        canvas.style.top = "0px";
+        canvas.style.bottom = "0px";
+        canvas.style.margin = "auto";
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+    }
+    globalThis.fitGameCanvas = fitGameCanvas;
+    window.addEventListener("resize", fitGameCanvas);
+
+    function custom_onload(debug_hidden) {
         // this is called before anything python is loaded
         // make your js customization here
         console.log(__FILE__, "custom_onload")
+        fitGameCanvas()
 
         pyconsole.hidden = debug_hidden
         system.hidden = debug_hidden
